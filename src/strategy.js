@@ -99,6 +99,8 @@ class SteamStrategy extends Strategy {
 		if (!req.query || !req.query["openid.mode"]) {
 			const authUrl = buildAuthUrl(this._realm, this._returnUrl);
 
+			// this one is not supporting fastify
+			// TODO: Fix for fastify
 			return this.redirect(authUrl);
 		}
 
