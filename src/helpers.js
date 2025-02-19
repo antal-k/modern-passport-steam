@@ -187,6 +187,7 @@ async function makeSteamRequest(body, proxy) {
 
 		return isValid;
 	} catch (err) {
+		console.log(err);
 		throw new Error(`HTTP error ${err.message} when validating response`);
 	}
 }
