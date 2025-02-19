@@ -1,5 +1,6 @@
 const assert = require("assert");
 const SteamID = require("steamid");
+const HttpsProxyAgent = require("https-proxy-agent");
 
 const { REQUIRED_PARAMS, REQUIRED_SIGNED_PARAMS } = require("./constants");
 
@@ -150,8 +151,14 @@ function extractAndVerifyParams(url, expectedRealm) {
  * @returns {Promise<boolean>} Whether the response was valid
  * @throws {Error} If the steam request is invalid
  */
-async function makeSteamRequest(body) {
+async function makeSteamRequest(body, proxy) {
 	try {
+		let httpsAgent = undefined;
+
+		if (proxy) {
+			httpsAgent = new HttpsProxyAgent(proxy);
+		}
+
 		const response = await fetch("https://steamcommunity.com/openid/login", {
 			method: "POST",
 			headers: {
@@ -160,6 +167,7 @@ async function makeSteamRequest(body) {
 				origin: "https://steamcommunity.com",
 			},
 			body: new URLSearchParams(body).toString(),
+			httpsAgent,
 		});
 
 		if (!response.ok) {
@@ -184,11 +192,11 @@ async function makeSteamRequest(body) {
  * @param {string} expectedRealm - The expected realm
  * @returns {Promise<object>} The SteamID that logged in
  */
-async function verifyLogin(url, expectedRealm) {
+async function verifyLogin(url, expectedRealm, proxy) {
 	const query = extractAndVerifyParams(url, expectedRealm);
 	assert(query, "Failed to extract and verify parameters");
 
-	const response = await makeSteamRequest(query);
+	const response = await makeSteamRequest(query, proxy);
 	assert(
 		response,
 		"Response was not validated by Steam. It may be forged or reused."

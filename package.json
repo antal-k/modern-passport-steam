@@ -17,7 +17,8 @@
 		"eslint-plugin-n": "^16.0.2",
 		"eslint-plugin-promise": "^6.1.1",
 		"eslint-plugin-require-path-exists": "^1.1.9",
-		"eslint-plugin-security": "^1.7.1"
+		"eslint-plugin-security": "^1.7.1",
+		"https-proxy-agent": "^7.0.6"
 	},
 	"author": "Easton S. (sampli)",
 	"license": "MIT",
