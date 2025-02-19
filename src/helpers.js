@@ -1,7 +1,7 @@
-const assert = require('assert');
-const SteamID = require('steamid');
+const assert = require("assert");
+const SteamID = require("steamid");
 
-const { REQUIRED_PARAMS, REQUIRED_SIGNED_PARAMS } = require('./constants');
+const { REQUIRED_PARAMS, REQUIRED_SIGNED_PARAMS } = require("./constants");
 
 /**
  * Canonicalizes a realm URL
@@ -23,16 +23,19 @@ function canonicalizeRealm(realm) {
  */
 function buildAuthUrl(realm, returnUrl) {
 	const query = {
-		'openid.claimed_id': 'http://specs.openid.net/auth/2.0/identifier_select',
-		'openid.identity': 'http://specs.openid.net/auth/2.0/identifier_select',
-		'openid.mode': 'checkid_setup',
-		'openid.ns': 'http://specs.openid.net/auth/2.0',
-		'openid.realm': realm,
-		'openid.return_to': returnUrl
+		"openid.claimed_id": "http://specs.openid.net/auth/2.0/identifier_select",
+		"openid.identity": "http://specs.openid.net/auth/2.0/identifier_select",
+		"openid.mode": "checkid_setup",
+		"openid.ns": "http://specs.openid.net/auth/2.0",
+		"openid.realm": realm,
+		"openid.return_to": returnUrl,
 	};
 
-	return 'https://steamcommunity.com/openid/login?' + new URLSearchParams(query).toString();
-};
+	return (
+		"https://steamcommunity.com/openid/login?" +
+		new URLSearchParams(query).toString()
+	);
+}
 
 /**
  * Builds the query object from parsed URL
@@ -44,14 +47,17 @@ function buildQuery(parsedUrl) {
 	const query = {};
 
 	// Ensure all required parameters are present and signed
-	REQUIRED_PARAMS.forEach(param => {
-		assert(parsedUrl.searchParams.has(param), `No "${param}" parameter is present in the URL`);
+	REQUIRED_PARAMS.forEach((param) => {
+		assert(
+			parsedUrl.searchParams.has(param),
+			`No "${param}" parameter is present in the URL`
+		);
 
 		query[param] = parsedUrl.searchParams.get(param);
 	});
 
-	const signedParams = query['openid.signed'].split(',');
-	signedParams.forEach(param => {
+	const signedParams = query["openid.signed"].split(",");
+	signedParams.forEach((param) => {
 		const value = parsedUrl.searchParams.get(`openid.${param}`);
 		assert(value, `No "${param}" parameter is present in the URL`);
 
@@ -59,7 +65,10 @@ function buildQuery(parsedUrl) {
 	});
 
 	// Verify that some important parameters are signed. Steam *should* check this, but let's be doubly sure.
-	assert(REQUIRED_SIGNED_PARAMS.every(param => query[`openid.${param}`]), 'A vital parameter was not signed');
+	assert(
+		REQUIRED_SIGNED_PARAMS.every((param) => query[`openid.${param}`]),
+		"A vital parameter was not signed"
+	);
 
 	return query;
 }
@@ -70,7 +79,9 @@ function buildQuery(parsedUrl) {
  * @returns {string[]} The parsed claimed_id
  */
 function extractClaimedId(query) {
-	const claimedIdMatch = (query['openid.claimed_id'] || '').match(/^https?:\/\/steamcommunity\.com\/openid\/id\/(\d+)\/?$/);
+	const claimedIdMatch = (query["openid.claimed_id"] || "").match(
+		/^https?:\/\/steamcommunity\.com\/openid\/id\/(\d+)\/?$/
+	);
 
 	return claimedIdMatch;
 }
@@ -87,18 +98,27 @@ function sanitizeQuery(query, expectedRealm) {
 	// we will never use `query` after this point
 	const sanitizedQuery = {
 		...query,
-		'openid.ns': 'http://specs.openid.net/auth/2.0',
-		'openid.mode': 'check_authentication'
+		"openid.ns": "http://specs.openid.net/auth/2.0",
+		"openid.mode": "check_authentication",
 	};
 
 	// Check openid.return_to from our query object, because it's very important that it be a signed parameter.
-	assert(sanitizedQuery['openid.return_to'], 'No "openid.return_to" parameter is present in the URL');
+	assert(
+		sanitizedQuery["openid.return_to"],
+		'No "openid.return_to" parameter is present in the URL'
+	);
 
-	const realm = canonicalizeRealm(sanitizedQuery['openid.return_to']);
-	assert(realm === expectedRealm, `Return realm "${realm}" does not match expected realm "${expectedRealm}"`);
+	const realm = canonicalizeRealm(sanitizedQuery["openid.return_to"]);
+	assert(
+		realm === expectedRealm,
+		`Return realm "${realm}" does not match expected realm "${expectedRealm}"`
+	);
 
 	const claimedId = extractClaimedId(sanitizedQuery);
-	assert(claimedId, 'No "openid.claimed_id" parameter is present in the URL, or it doesn\'t have the correct format');
+	assert(
+		claimedId,
+		'No "openid.claimed_id" parameter is present in the URL, or it doesn\'t have the correct format'
+	);
 
 	return sanitizedQuery;
 }
@@ -112,8 +132,11 @@ function sanitizeQuery(query, expectedRealm) {
 function extractAndVerifyParams(url, expectedRealm) {
 	const parsedUrl = new URL(url);
 
-	const openidMode = parsedUrl.searchParams.get('openid.mode') || '';
-	assert(openidMode === 'id_res', `Response parameter openid.mode value "${openidMode}" does not match expected value "id_res"`);
+	const openidMode = parsedUrl.searchParams.get("openid.mode") || "";
+	assert(
+		openidMode === "id_res",
+		`Response parameter openid.mode value "${openidMode}" does not match expected value "id_res"`
+	);
 
 	const query = buildQuery(parsedUrl);
 	const sanitizedQuery = sanitizeQuery(query, expectedRealm);
@@ -128,26 +151,29 @@ function extractAndVerifyParams(url, expectedRealm) {
  * @throws {Error} If the steam request is invalid
  */
 async function makeSteamRequest(body) {
-	try{
-		const response = await fetch('https://steamcommunity.com/openid/login', {
-			method: 'POST',
+	try {
+		const response = await fetch("https://steamcommunity.com/openid/login", {
+			method: "POST",
 			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded'
+				"Content-Type": "application/x-www-form-urlencoded",
+				referer: "https://steamcommunity.com/",
+				origin: "https://steamcommunity.com",
 			},
-			body: new URLSearchParams(body).toString()
+			body: new URLSearchParams(body).toString(),
 		});
 
-		if(!response.ok) {
+		if (!response.ok) {
 			throw new Error(response.status);
 		}
 
 		const data = await response.text();
-		const isValid = data.replace(/\r\n/g, '\n')
-			.split('\n')
-			.some(line => line === 'is_valid:true');
+		const isValid = data
+			.replace(/\r\n/g, "\n")
+			.split("\n")
+			.some((line) => line === "is_valid:true");
 
 		return isValid;
-	} catch(err) {
+	} catch (err) {
 		throw new Error(`HTTP error ${err.message} when validating response`);
 	}
 }
@@ -160,10 +186,13 @@ async function makeSteamRequest(body) {
  */
 async function verifyLogin(url, expectedRealm) {
 	const query = extractAndVerifyParams(url, expectedRealm);
-	assert(query, 'Failed to extract and verify parameters');
+	assert(query, "Failed to extract and verify parameters");
 
 	const response = await makeSteamRequest(query);
-	assert(response, 'Response was not validated by Steam. It may be forged or reused.');
+	assert(
+		response,
+		"Response was not validated by Steam. It may be forged or reused."
+	);
 
 	return new SteamID(extractClaimedId(query)[1]);
 }
@@ -171,5 +200,5 @@ async function verifyLogin(url, expectedRealm) {
 module.exports = {
 	verifyLogin,
 	buildAuthUrl,
-	canonicalizeRealm
+	canonicalizeRealm,
 };
