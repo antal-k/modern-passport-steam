@@ -121,6 +121,7 @@ class SteamStrategy extends Strategy {
 				return this.success(user);
 			});
 		} catch (err) {
+			console.log(err);
 			return this.fail(err);
 		}
 	}

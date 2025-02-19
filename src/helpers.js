@@ -1,6 +1,7 @@
 const assert = require("assert");
 const SteamID = require("steamid");
 const HttpsProxyAgent = require("https-proxy-agent");
+const axios = require("axios");
 
 const { REQUIRED_PARAMS, REQUIRED_SIGNED_PARAMS } = require("./constants");
 
@@ -159,24 +160,26 @@ async function makeSteamRequest(body, proxy) {
 			httpsAgent = new HttpsProxyAgent(proxy);
 		}
 
-		const response = await fetch("https://steamcommunity.com/openid/login", {
-			method: "POST",
-			headers: {
-				"User-agent":
-					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-				"Content-Type": "application/x-www-form-urlencoded",
-				referer: "https://steamcommunity.com/",
-				origin: "https://steamcommunity.com/",
-			},
-			body: new URLSearchParams(body).toString(),
-			agent: httpsAgent,
-		});
+		const response = await axios.post(
+			"https://steamcommunity.com/openid/login",
+			new URLSearchParams(body).toString(),
+			{
+				headers: {
+					"User-agent":
+						"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+					"Content-Type": "application/x-www-form-urlencoded",
+					referer: "https://steamcommunity.com/",
+					origin: "https://steamcommunity.com/",
+				},
+				httpsAgent,
+			}
+		);
 
-		if (!response.ok) {
+		if (response.status !== 200) {
 			throw new Error(response.status);
 		}
 
-		const data = await response.text();
+		const data = response.data;
 		const isValid = data
 			.replace(/\r\n/g, "\n")
 			.split("\n")
