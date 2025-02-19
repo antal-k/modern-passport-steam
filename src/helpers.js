@@ -159,25 +159,17 @@ async function makeSteamRequest(body, proxy) {
 			httpsAgent = new HttpsProxyAgent(proxy);
 		}
 
-		console.log({
-			method: "POST",
-			headers: {
-				"Content-Type": "application/x-www-form-urlencoded",
-				referer: "https://steamcommunity.com/",
-				origin: "https://steamcommunity.com",
-			},
-			body: new URLSearchParams(body).toString(),
-		});
-
 		const response = await fetch("https://steamcommunity.com/openid/login", {
 			method: "POST",
 			headers: {
+				"User-agent":
+					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
 				"Content-Type": "application/x-www-form-urlencoded",
 				referer: "https://steamcommunity.com/",
-				origin: "https://steamcommunity.com",
+				origin: "https://steamcommunity.com/",
 			},
 			body: new URLSearchParams(body).toString(),
-			// httpsAgent,
+			agent: httpsAgent,
 		});
 
 		if (!response.ok) {
